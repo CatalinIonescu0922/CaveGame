@@ -1,0 +1,17 @@
+# IDEs generated folders.
+.vs/
+.vscode/
+.idea/
+
+# Project files.
+*.sln
+*.vcxproj
+*.vcxproj.user
+
+# Binaries.
+Binaries/Debug/
+Binaries/Development/
+Binaries/Shipping/
+
+# Intermediate files.
+Intermediate/
