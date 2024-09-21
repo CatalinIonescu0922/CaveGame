@@ -6,6 +6,26 @@
 -- SPDX-License-Identifier: Apache-2.0.
 --
 
+function setup_project_configuration_settings()
+    filter "configurations:Debug"
+        optimize "off"
+        symbols "on"
+        defines { "CAVE_CONFIGURATION_DEBUG=1" }
+    filter {}
+
+    filter "configurations:Development"
+        optimize "on"
+        symbols "on"
+        defines { "CAVE_CONFIGURATION_DEVELOPMENT=1" }
+    filter {}
+
+    filter "configurations:Shipping"
+        optimize "speed"
+        symbols "off"
+        defines { "CAVE_CONFIGURATION_SHIPPING=1" }
+    filter {}
+end
+
 workspace "CaveGame"
     configurations
     {
@@ -52,6 +72,13 @@ workspace "CaveGame"
             "%{wks.location}/Engine/Source"
         }
 
+        setup_project_configuration_settings()
+        filter "platforms:windows"
+            systemversion "latest"    
+            defines { "CAVE_PLATFORM_WINDOWS=1" }
+        filter {}
+    -- endproject "Engine"
+
     project "CaveGame"
         kind "ConsoleApp"
         location "%{wks.location}/Source"
@@ -83,3 +110,10 @@ workspace "CaveGame"
         {
             "Engine"
         }
+
+        setup_project_configuration_settings()
+        filter "platforms:windows"
+            systemversion "latest"    
+            defines { "CAVE_PLATFORM_WINDOWS=1" }
+        filter {}
+    -- endproject "CaveGame"
