@@ -1,3 +1,11 @@
+--
+-- Copyright (c) Catalin Ionescu 2024. All rights reserved.
+-- Copyright (c) Robert Bengulescu 2024. All rights reserved.
+-- Copyright (c) Traian Avram 2024. All rights reserved.
+-- 
+-- SPDX-License-Identifier: Apache-2.0.
+--
+
 workspace "CaveGame"
     configurations
     {
@@ -20,7 +28,7 @@ workspace "CaveGame"
 
     project "Engine"
         kind "StaticLib"
-        location "%{wks.location}/Engine"
+        location "%{wks.location}/Engine/Source"
 
         language "c++"
         cppdialect "c++20"
@@ -46,7 +54,7 @@ workspace "CaveGame"
 
     project "CaveGame"
         kind "ConsoleApp"
-        location "%{wks.location}"
+        location "%{wks.location}/Source"
 
         language "c++"
         cppdialect "c++20"
