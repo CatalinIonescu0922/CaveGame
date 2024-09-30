@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+#include <CaveGameLoop.h>
 #include <Engine/Engine.h>
 
 namespace CaveGame
@@ -25,9 +26,9 @@ static int cave_game_main()
         // Engine initialize failed. Aborting.
         return 1;
     }
-    
+
     // Run game.
-    engine->run();
+    engine->run<CaveGameLoop>();
 
     engine->shutdown();
     delete engine;
