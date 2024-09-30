@@ -45,6 +45,18 @@ using intptr = i64;
 } // namespace CaveGame
 #endif // CAVE_PLATFORM_WINDOWS
 
+// Marks the type in which this macro is placed as non-copyable, by marking the
+// copy constructor and assignment operator as deleted.
+#define CAVE_MAKE_NONCOPYABLE(type_name)  \
+    type_name(const type_name&) = delete; \
+    type_name& operator=(const type_name&) = delete
+
+// Marks the type in which this macro is placed as non-movable, by marking the
+// move constructor and assignment operator as deleted.
+#define CAVE_MAKE_NONMOVABLE(type_name)       \
+    type_name(type_name&&) noexcept = delete; \
+    type_name& operator=(type_name&&) noexcept = delete
+
 namespace CaveGame
 {
 
