@@ -120,3 +120,8 @@
 
 // Expands to the number of elements stored in the given static array.
 #define ARRAY_COUNT(x) (sizeof(x) / sizeof((x)[0]))
+
+// Constants regarding memory size units.
+#define KiB (static_cast<usize>(1024))
+#define MiB (1024 * KiB)
+#define GiB (1024 * MiB)
