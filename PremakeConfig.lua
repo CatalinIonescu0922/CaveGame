@@ -76,6 +76,13 @@ workspace "CaveGame"
         filter "platforms:windows"
             systemversion "latest"    
             defines { "CAVE_PLATFORM_WINDOWS=1" }
+
+            links
+            {
+                "d3d11.lib",
+                "d3dcompiler.lib",
+                "dxgi.lib"
+            }
         filter {}
     -- endproject "Engine"
 
