@@ -117,3 +117,6 @@
 // Represent hints to the compiler that the path of execution is more or less likely than the alternative.
 #define LIKELY   [[likely]]
 #define UNLIKELY [[unlikely]]
+
+// Expands to the number of elements stored in the given static array.
+#define ARRAY_COUNT(x) (sizeof(x) / sizeof((x)[0]))
