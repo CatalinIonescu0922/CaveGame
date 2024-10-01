@@ -8,6 +8,7 @@
 
 #include <Core/Platform/Timer.h>
 #include <Engine/Engine.h>
+#include <Renderer/Renderer.h>
 
 namespace CaveGame
 {
@@ -37,6 +38,12 @@ bool Engine::initialize()
         return false;
     }
 
+    if (!Renderer::initialize(&s_engine->window))
+    {
+        // The renderer system initialization has failed.
+        return false;
+    }
+
     return true;
 }
 
@@ -48,6 +55,7 @@ void Engine::shutdown()
         return;
     }
 
+    Renderer::shutdown();
     s_engine->window.shutdown();
 
     delete s_engine;
