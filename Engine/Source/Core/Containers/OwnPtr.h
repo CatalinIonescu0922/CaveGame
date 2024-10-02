@@ -127,7 +127,7 @@ public:
     {
         Q* casted_instance = reinterpret_cast<Q*>(m_instance);
         m_instance = nullptr;
-        return OwnPtr<Q>(m_instance);
+        return OwnPtr<Q>(casted_instance);
     }
 
 private:
