@@ -6,27 +6,15 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <Renderer/Framebuffer.h>
+#include <Renderer/Platform/D3D11/D3D11Framebuffer.h>
 #include <Renderer/Platform/D3D11/D3D11Image.h>
-#include <Renderer/Renderer.h>
-#include <Renderer/RenderingContext.h>
+#include <Renderer/Platform/D3D11/D3D11Renderer.h>
+#include <Renderer/Platform/D3D11/D3D11RenderingContext.h>
 
 namespace CaveGame
 {
 
-RefPtr<Framebuffer> Framebuffer::create(const FramebufferDescription& description)
-{
-    Framebuffer* framebuffer = new Framebuffer(description);
-    return adopt_ref(framebuffer);
-}
-
-RefPtr<Framebuffer> Framebuffer::create(RenderingContext& rendering_context)
-{
-    Framebuffer* framebuffer = new Framebuffer(rendering_context);
-    return adopt_ref(framebuffer);
-}
-
-Framebuffer::Framebuffer(const FramebufferDescription& description)
+D3D11Framebuffer::D3D11Framebuffer(const FramebufferDescription& description)
     : m_is_swapchain_target(false)
     , m_width(0)
     , m_height(0)
@@ -42,13 +30,13 @@ Framebuffer::Framebuffer(const FramebufferDescription& description)
     invalidate(description.width, description.heigth);
 }
 
-Framebuffer::Framebuffer(RenderingContext& rendering_context)
+D3D11Framebuffer::D3D11Framebuffer(RenderingContext& rendering_context)
     : m_is_swapchain_target(true)
-    , m_rendering_context(rendering_context)
+    , m_rendering_context(static_cast<D3D11RenderingContext&>(rendering_context))
     , m_width(0)
     , m_height(0)
 {
-    m_rendering_context->reference_swapchain_target_framebuffer(*this);
+    m_rendering_context->reference_swapchain_target_framebuffer(this);
 
     Attachment attachment = {};
     attachment.description.format = rendering_context.get_swapchain_image_format();
@@ -56,18 +44,18 @@ Framebuffer::Framebuffer(RenderingContext& rendering_context)
     invalidate(0, 0);
 }
 
-Framebuffer::~Framebuffer()
+D3D11Framebuffer::~D3D11Framebuffer()
 {
     if (m_is_swapchain_target)
     {
         CAVE_ASSERT(m_rendering_context.has_value());
-        m_rendering_context->dereference_swapchain_target_framebuffer(*this);
+        m_rendering_context->dereference_swapchain_target_framebuffer(this);
     }
 
     destroy();
 }
 
-void Framebuffer::invalidate(u32 new_width, u32 new_height)
+void D3D11Framebuffer::invalidate(u32 new_width, u32 new_height)
 {
     if (m_is_swapchain_target)
     {
@@ -105,19 +93,16 @@ void Framebuffer::invalidate(u32 new_width, u32 new_height)
         render_target_view_description.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
         render_target_view_description.Texture2D.MipSlice = 0;
 
-        // Obtain the D3D11 device.
-        auto* device = Renderer::get_rendering_context().get_device();
-
-        const HRESULT image_creation_result = device->CreateTexture2D(&texture_description, nullptr, &attachment.image_handle);
+        const HRESULT image_creation_result = D3D11Renderer::get_device()->CreateTexture2D(&texture_description, nullptr, &attachment.image_handle);
         CAVE_ASSERT(SUCCEEDED(image_creation_result));
 
         const HRESULT image_rtv_creation_result =
-            device->CreateRenderTargetView(attachment.image_handle, &render_target_view_description, &attachment.image_rtv_handle);
+            D3D11Renderer::get_device()->CreateRenderTargetView(attachment.image_handle, &render_target_view_description, &attachment.image_rtv_handle);
         CAVE_ASSERT(SUCCEEDED(image_rtv_creation_result));
     }
 }
 
-void Framebuffer::invalidate_swapchain_target()
+void D3D11Framebuffer::invalidate_swapchain_target()
 {
     destroy();
 
@@ -125,14 +110,14 @@ void Framebuffer::invalidate_swapchain_target()
     CAVE_ASSERT(m_attachments.count() == 1);
 
     Attachment& attachment = m_attachments.first();
-    attachment.image_handle = m_rendering_context->get_swapchain_image();
-    attachment.image_rtv_handle = m_rendering_context->get_swapchain_image_view();
+    attachment.image_handle = static_cast<ID3D11Texture2D*>(m_rendering_context->get_swapchain_image());
+    attachment.image_rtv_handle = static_cast<ID3D11RenderTargetView*>(m_rendering_context->get_swapchain_image_view());
 
     m_width = m_rendering_context->get_swapchain_width();
     m_height = m_rendering_context->get_swapchain_height();
 }
 
-void Framebuffer::destroy()
+void D3D11Framebuffer::destroy()
 {
     for (Attachment& attachment : m_attachments)
     {
@@ -152,19 +137,19 @@ void Framebuffer::destroy()
     m_height = 0;
 }
 
-void* Framebuffer::get_attachment_image(u32 attachment_index) const
+void* D3D11Framebuffer::get_attachment_image(u32 attachment_index) const
 {
     CAVE_ASSERT(attachment_index < m_attachments.count());
     return m_attachments[attachment_index].image_handle;
 }
 
-void* Framebuffer::get_attachment_image_view(u32 attachment_index) const
+void* D3D11Framebuffer::get_attachment_image_view(u32 attachment_index) const
 {
     CAVE_ASSERT(attachment_index < m_attachments.count());
     return m_attachments[attachment_index].image_rtv_handle;
 }
 
-const FramebufferAttachmentDescription& Framebuffer::get_attachment_description(u32 attachment_index) const
+const FramebufferAttachmentDescription& D3D11Framebuffer::get_attachment_description(u32 attachment_index) const
 {
     CAVE_ASSERT(attachment_index < m_attachments.count());
     return m_attachments[attachment_index].description;

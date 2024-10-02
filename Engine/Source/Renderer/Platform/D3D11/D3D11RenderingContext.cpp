@@ -6,57 +6,17 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
-#include <Core/Containers/Optional.h>
 #include <Core/Platform/Window.h>
-#include <Renderer/Framebuffer.h>
-#include <Renderer/RenderingContext.h>
+#include <Renderer/Platform/D3D11/D3D11Framebuffer.h>
+#include <Renderer/Platform/D3D11/D3D11Renderer.h>
+#include <Renderer/Platform/D3D11/D3D11RenderingContext.h>
 
 namespace CaveGame
 {
 
-OwnPtr<RenderingContext> RenderingContext::create(Window* window_context)
-{
-    RenderingContext* rendering_context = new RenderingContext(window_context);
-    return adopt_own(rendering_context);
-}
-
-RenderingContext::RenderingContext(Window* window_context)
+D3D11RenderingContext::D3D11RenderingContext(Window* window_context)
     : m_window_context(window_context)
-    , m_device(nullptr)
-    , m_device_context(nullptr)
 {
-    UINT device_creation_flags = 0;
-#if CAVE_CONFIGURATION_DEBUG
-    // Enable the debug flag in the device configuration when compiling to a debug configuration.
-    device_creation_flags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif // CAVE_CONFIGURATION_DEBUG
-
-    const D3D_FEATURE_LEVEL feature_levels[] = {
-        D3D_FEATURE_LEVEL_11_1,
-        D3D_FEATURE_LEVEL_11_0,
-    };
-    D3D_FEATURE_LEVEL selected_feature_level = {};
-
-    const HRESULT device_creation_result = D3D11CreateDevice(
-        nullptr,
-        D3D_DRIVER_TYPE_HARDWARE,
-        nullptr,
-        device_creation_flags,
-        feature_levels,
-        ARRAY_COUNT(feature_levels),
-        D3D11_SDK_VERSION,
-        &m_device,
-        &selected_feature_level,
-        &m_device_context
-    );
-
-    // NOTE: There is no point in trying to continue running the engine if the D3D11 device can't be created.
-    // Exiting the application (by forcing to crash in this case) will be the end result anyway.
-    CAVE_VERIFY(SUCCEEDED(device_creation_result));
-
-    const HRESULT dxgi_factory_creation_result = CreateDXGIFactory1(IID_PPV_ARGS(&m_dxgi_factory));
-    CAVE_VERIFY(SUCCEEDED(dxgi_factory_creation_result));
-
     // Set the swapchain immutable configuration parameters.
     m_swapchain.format = DXGI_FORMAT_B8G8R8A8_UNORM;
     m_swapchain.image_count = 2;
@@ -65,19 +25,15 @@ RenderingContext::RenderingContext(Window* window_context)
     invalidate_swapchain(window_context->get_client_area_width(), window_context->get_client_area_height());
 }
 
-RenderingContext::~RenderingContext()
+D3D11RenderingContext::~D3D11RenderingContext()
 {
     // NOTE: If there are still framebuffers alive it means the rendering context shouldn't be deleted, thus
     // is represents an invalid state. Continuing the execution will cause crashes in unexpected places.
     CAVE_VERIFY(m_swapchain.referenced_framebuffers.is_empty());
     destroy_swapchain();
-
-    CAVE_D3D11_RELEASE(m_dxgi_factory);
-    CAVE_D3D11_RELEASE(m_device_context);
-    CAVE_D3D11_RELEASE(m_device);
 }
 
-void RenderingContext::invalidate_swapchain(u32 new_width, u32 new_height)
+void D3D11RenderingContext::invalidate_swapchain(u32 new_width, u32 new_height)
 {
     destroy_swapchain();
 
@@ -104,8 +60,8 @@ void RenderingContext::invalidate_swapchain(u32 new_width, u32 new_height)
     swapchain_fullscreen_description.Scaling = DXGI_MODE_SCALING_CENTERED;
     swapchain_fullscreen_description.Windowed = true;
 
-    const HRESULT swapchain_creation_result = m_dxgi_factory->CreateSwapChainForHwnd(
-        m_device,
+    const HRESULT swapchain_creation_result = D3D11Renderer::get_dxgi_factory()->CreateSwapChainForHwnd(
+        D3D11Renderer::get_device(),
         static_cast<HWND>(m_window_context->get_native_handle()),
         &swapchain_description,
         &swapchain_fullscreen_description,
@@ -126,7 +82,7 @@ void RenderingContext::invalidate_swapchain(u32 new_width, u32 new_height)
     render_target_view_description.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 
     const HRESULT swapchain_image_create_rtv_result =
-        m_device->CreateRenderTargetView(m_swapchain.image_handle, &render_target_view_description, &m_swapchain.image_view_handle);
+        D3D11Renderer::get_device()->CreateRenderTargetView(m_swapchain.image_handle, &render_target_view_description, &m_swapchain.image_view_handle);
     CAVE_VERIFY(SUCCEEDED(swapchain_image_create_rtv_result));
 
     for (Framebuffer* referenced_framebuffer : m_swapchain.referenced_framebuffers)
@@ -136,10 +92,10 @@ void RenderingContext::invalidate_swapchain(u32 new_width, u32 new_height)
     }
 }
 
-void RenderingContext::destroy_swapchain()
+void D3D11RenderingContext::destroy_swapchain()
 {
     // Destroy all framebuffers that are referenced by the swapchain.
-    for (Framebuffer* referenced_framebuffer : m_swapchain.referenced_framebuffers)
+    for (D3D11Framebuffer* referenced_framebuffer : m_swapchain.referenced_framebuffers)
         referenced_framebuffer->destroy();
 
     CAVE_D3D11_RELEASE(m_swapchain.image_view_handle)
@@ -150,7 +106,7 @@ void RenderingContext::destroy_swapchain()
     m_swapchain.height = 0;
 }
 
-ImageFormat RenderingContext::get_swapchain_image_format() const
+ImageFormat D3D11RenderingContext::get_swapchain_image_format() const
 {
     switch (m_swapchain.format)
     {
@@ -162,39 +118,39 @@ ImageFormat RenderingContext::get_swapchain_image_format() const
     return ImageFormat::Unknown;
 }
 
-ID3D11Texture2D* RenderingContext::get_swapchain_image(u32 image_index /*= 0*/) const
+void* D3D11RenderingContext::get_swapchain_image(u32 image_index /*= 0*/) const
 {
     CAVE_ASSERT(image_index == 0);
     return m_swapchain.image_handle;
 }
 
-ID3D11RenderTargetView* RenderingContext::get_swapchain_image_view(u32 image_index /*= 0*/) const
+void* D3D11RenderingContext::get_swapchain_image_view(u32 image_index /*= 0*/) const
 {
     CAVE_ASSERT(image_index == 0);
     return m_swapchain.image_view_handle;
 }
 
-void RenderingContext::reference_swapchain_target_framebuffer(Framebuffer& framebuffer)
+void D3D11RenderingContext::reference_swapchain_target_framebuffer(D3D11Framebuffer* framebuffer)
 {
-    for (const Framebuffer* referenced_framebuffer : m_swapchain.referenced_framebuffers)
+    for (const D3D11Framebuffer* referenced_framebuffer : m_swapchain.referenced_framebuffers)
     {
         // The provided framebuffer is already referenced.
-        if (referenced_framebuffer == &framebuffer)
+        if (referenced_framebuffer == framebuffer)
             return;
     }
 
     // Add the framebuffer to the referenced list.
-    m_swapchain.referenced_framebuffers.add(&framebuffer);
+    m_swapchain.referenced_framebuffers.add(framebuffer);
 }
 
-void RenderingContext::dereference_swapchain_target_framebuffer(Framebuffer& framebuffer)
+void D3D11RenderingContext::dereference_swapchain_target_framebuffer(D3D11Framebuffer* framebuffer)
 {
     Optional<usize> framebuffer_index;
 
     for (usize index = 0; index < m_swapchain.referenced_framebuffers.count(); ++index)
     {
         // The provided framebuffer is already referenced.
-        if (m_swapchain.referenced_framebuffers[index] == &framebuffer)
+        if (m_swapchain.referenced_framebuffers[index] == framebuffer)
         {
             framebuffer_index = index;
             break;

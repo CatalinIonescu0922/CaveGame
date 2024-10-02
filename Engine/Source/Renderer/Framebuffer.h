@@ -8,11 +8,9 @@
 
 #pragma once
 
-#include <Core/Containers/Optional.h>
 #include <Core/Containers/RefPtr.h>
 #include <Core/Containers/Vector.h>
 #include <Renderer/Image.h>
-#include <Renderer/Platform/D3D11/D3D11GuardedInclude.h>
 
 namespace CaveGame
 {
@@ -52,8 +50,6 @@ class Framebuffer : public RefCounted
     CAVE_MAKE_NONCOPYABLE(Framebuffer);
     CAVE_MAKE_NONMOVABLE(Framebuffer);
 
-    friend class RenderingContext;
-
 public:
     //
     // Creates a new framebuffer by allocating a new image for each attachment.
@@ -66,7 +62,8 @@ public:
     //
     NODISCARD static RefPtr<Framebuffer> create(RenderingContext& rendering_context);
 
-    ~Framebuffer();
+    Framebuffer() = default;
+    virtual ~Framebuffer() override = default;
 
 public:
     //
@@ -74,41 +71,17 @@ public:
     // If the framebuffer is a swapchain target, the provided width and height parameters are ignored (and
     // thus should be set to zero).
     //
-    void invalidate(u32 new_width, u32 new_height);
+    virtual void invalidate(u32 new_width, u32 new_height) = 0;
 
-    NODISCARD ALWAYS_INLINE bool is_swapchain_target() const { return m_is_swapchain_target; }
+    NODISCARD virtual bool is_swapchain_target() const = 0;
 
-    NODISCARD ALWAYS_INLINE u32 get_width() const { return m_width; }
-    NODISCARD ALWAYS_INLINE u32 get_height() const { return m_height; }
-    NODISCARD ALWAYS_INLINE u32 get_attachment_count() const { return static_cast<u32>(m_attachments.count()); }
+    NODISCARD virtual u32 get_width() const = 0;
+    NODISCARD virtual u32 get_height() const = 0;
+    NODISCARD virtual u32 get_attachment_count() const = 0;
 
-    NODISCARD void* get_attachment_image(u32 attachment_index) const;
-    NODISCARD void* get_attachment_image_view(u32 attachment_index) const;
-    NODISCARD const FramebufferAttachmentDescription& get_attachment_description(u32 attachment_index) const;
-
-private:
-    explicit Framebuffer(const FramebufferDescription& description);
-    explicit Framebuffer(RenderingContext& rendering_context);
-
-    void invalidate_swapchain_target();
-
-    void destroy();
-
-private:
-    struct Attachment
-    {
-        ID3D11Texture2D* image_handle;
-        ID3D11RenderTargetView* image_rtv_handle;
-        FramebufferAttachmentDescription description;
-    };
-
-    bool m_is_swapchain_target;
-    // Has value only when the framebuffer is a swapchain target.
-    Optional<RenderingContext&> m_rendering_context;
-
-    u32 m_width;
-    u32 m_height;
-    Vector<Attachment> m_attachments;
+    NODISCARD virtual void* get_attachment_image(u32 attachment_index) const = 0;
+    NODISCARD virtual void* get_attachment_image_view(u32 attachment_index) const = 0;
+    NODISCARD virtual const FramebufferAttachmentDescription& get_attachment_description(u32 attachment_index) const = 0;
 };
 
 } // namespace CaveGame

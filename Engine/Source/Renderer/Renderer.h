@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <Renderer/Platform/D3D11/D3D11GuardedInclude.h>
+#include <Renderer/RendererAPI.h>
 #include <Renderer/RenderingContext.h>
 
 namespace CaveGame
@@ -24,6 +24,7 @@ public:
     static void shutdown();
 
 public:
+    static RendererAPI get_renderer_api();
     static RenderingContext& get_rendering_context();
 
 private:

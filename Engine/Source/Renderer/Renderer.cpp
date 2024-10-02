@@ -7,12 +7,18 @@
  */
 
 #include <Renderer/Renderer.h>
+#include <Renderer/RendererInterface.h>
+
+#if CAVE_RENDERER_API_IS_AVAILABLE_D3D11
+    #include <Renderer/Platform/D3D11/D3D11Renderer.h>
+#endif // CAVE_RENDERER_API_IS_AVAILABLE_D3D11
 
 namespace CaveGame
 {
 
 struct RendererData
 {
+    OwnPtr<RendererInterface> renderer_interface;
     OwnPtr<RenderingContext> rendering_context;
 };
 
@@ -29,9 +35,18 @@ bool Renderer::initialize(Window* window_context)
     s_renderer = new RendererData();
     CAVE_VERIFY(s_renderer != nullptr);
 
+    // Create the renderer interface (D3D11).
+    CAVE_ASSERT(get_renderer_api() == RendererAPI::D3D11);
+    s_renderer->renderer_interface = create_own<D3D11Renderer>().as<RendererInterface>();
+    if (!s_renderer->renderer_interface->initialize())
+    {
+        // The renderer interface initialization has failed.
+        return false;
+    }
+
     // Create the rendering (D3D11) context.
     s_renderer->rendering_context = RenderingContext::create(window_context);
-    
+
     return true;
 }
 
@@ -45,8 +60,18 @@ void Renderer::shutdown()
 
     s_renderer->rendering_context.release();
 
+    s_renderer->renderer_interface->shutdown();
+    s_renderer->renderer_interface.release();
+
     delete s_renderer;
     s_renderer = nullptr;
+}
+
+RendererAPI Renderer::get_renderer_api()
+{
+    const RendererAPI recommended_renderer_api = get_recommended_renderer_api_for_current_platform();
+    CAVE_ASSERT(is_renderer_api_available(recommended_renderer_api));
+    return recommended_renderer_api;
 }
 
 RenderingContext& Renderer::get_rendering_context()
