@@ -10,6 +10,7 @@
 
 #include <Core/Assertion.h>
 #include <Core/CoreTypes.h>
+#include <Core/Memory/New.h>
 
 namespace CaveGame
 {
