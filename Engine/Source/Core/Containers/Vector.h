@@ -74,6 +74,7 @@ public:
             m_elements = allocate_memory(m_capacity);
         }
 
+        m_count = other.m_count;
         copy_elements(m_elements, other.m_elements, m_count);
         return *this;
     }
