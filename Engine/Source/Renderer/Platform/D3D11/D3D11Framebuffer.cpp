@@ -40,6 +40,7 @@ D3D11Framebuffer::D3D11Framebuffer(RenderingContext& rendering_context)
 
     Attachment attachment = {};
     attachment.description.format = rendering_context.get_swapchain_image_format();
+    m_attachments.add(move(attachment));
 
     invalidate(0, 0);
 }
