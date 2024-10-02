@@ -26,6 +26,9 @@ public:
     virtual void begin_frame() override;
     virtual void end_frame() override;
 
+    virtual void begin_render_pass(RefPtr<RenderPass> render_pass) override;
+    virtual void end_render_pass() override;
+
 public:
     static ID3D11Device* get_device();
     static ID3D11DeviceContext* get_device_context();

@@ -7,6 +7,7 @@
  */
 
 #include <Core/Assertion.h>
+#include <Renderer/Platform/D3D11/D3D11RenderPass.h>
 #include <Renderer/Platform/D3D11/D3D11Renderer.h>
 #include <Renderer/Platform/D3D11/D3D11RenderingContext.h>
 #include <Renderer/Renderer.h>
@@ -97,7 +98,7 @@ void D3D11Renderer::end_frame()
     // Get the active rendering context. The generic renderer system is reponsible for ensuring that
     // the active context is always set correctly.
     D3D11RenderingContext& context = static_cast<D3D11RenderingContext&>(Renderer::get_rendering_context());
-    
+
     const HRESULT swapchain_present_result = context.get_swapchain()->Present(0, 0);
     if (FAILED(swapchain_present_result))
     {
@@ -106,6 +107,42 @@ void D3D11Renderer::end_frame()
         return;
     }
 }
+
+void D3D11Renderer::begin_render_pass(RefPtr<RenderPass> generic_render_pass)
+{
+    RefPtr<D3D11RenderPass> render_pass = generic_render_pass.as<D3D11RenderPass>();
+    D3D11Framebuffer& target_framebuffer = render_pass->get_target_framebuffer();
+
+    // Get a list with views towards all target framebuffer attachments.
+    Vector<ID3D11RenderTargetView*> attachment_rtvs;
+    attachment_rtvs.set_capacity(target_framebuffer.get_attachment_count());
+    for (u32 attachment_index = 0; attachment_index < target_framebuffer.get_attachment_count(); ++attachment_index)
+        attachment_rtvs.add(static_cast<ID3D11RenderTargetView*>(target_framebuffer.get_attachment_image_view(attachment_index)));
+
+    // Set the render targets.
+    get_device_context()->OMSetRenderTargets(target_framebuffer.get_attachment_count(), attachment_rtvs.elements(), nullptr);
+
+    // Clear the framebuffer attachment if the load operation is set to `Clear`.
+    for (u32 attachment_index = 0; attachment_index < target_framebuffer.get_attachment_count(); ++attachment_index)
+    {
+        const RenderPassAttachmentDescription& render_pass_attachment = render_pass->get_target_framebuffer_attachment(attachment_index);
+        if (render_pass_attachment.load_operation == RenderPassAttachmentLoadOperation::Clear)
+        {
+            ID3D11RenderTargetView* attachment_view = static_cast<ID3D11RenderTargetView*>(target_framebuffer.get_attachment_image_view(attachment_index));
+            const FLOAT clear_color[] = {
+                render_pass_attachment.clear_color.r,
+                render_pass_attachment.clear_color.g,
+                render_pass_attachment.clear_color.b,
+                render_pass_attachment.clear_color.a,
+            };
+
+            get_device_context()->ClearRenderTargetView(attachment_view, clear_color);
+        }
+    }
+}
+
+void D3D11Renderer::end_render_pass()
+{}
 
 ID3D11Device* D3D11Renderer::get_device()
 {

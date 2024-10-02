@@ -77,6 +77,16 @@ void Renderer::end_frame()
     s_renderer->renderer_interface->end_frame();
 }
 
+void Renderer::begin_render_pass(RefPtr<RenderPass> render_pass)
+{
+    s_renderer->renderer_interface->begin_render_pass(render_pass);
+}
+
+void Renderer::end_render_pass()
+{
+    s_renderer->renderer_interface->end_render_pass();
+}
+
 RendererAPI Renderer::get_renderer_api()
 {
     const RendererAPI recommended_renderer_api = get_recommended_renderer_api_for_current_platform();

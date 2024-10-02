@@ -9,6 +9,7 @@
 #pragma once
 
 #include <Renderer/RendererAPI.h>
+#include <Renderer/RenderPass.h>
 
 namespace CaveGame
 {
@@ -27,6 +28,9 @@ public:
 
     virtual void begin_frame() = 0;
     virtual void end_frame() = 0;
+
+    virtual void begin_render_pass(RefPtr<RenderPass> render_pass) = 0;
+    virtual void end_render_pass() = 0;
 };
 
 } // namespace CaveGame
