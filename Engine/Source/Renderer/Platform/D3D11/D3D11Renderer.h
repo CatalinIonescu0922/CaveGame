@@ -23,6 +23,9 @@ public:
     virtual bool initialize() override;
     virtual void shutdown() override;
 
+    virtual void begin_frame() override;
+    virtual void end_frame() override;
+
 public:
     static ID3D11Device* get_device();
     static ID3D11DeviceContext* get_device_context();

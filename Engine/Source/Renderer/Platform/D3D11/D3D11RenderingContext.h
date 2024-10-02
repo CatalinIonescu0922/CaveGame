@@ -30,6 +30,7 @@ public:
 
     NODISCARD virtual void* get_swapchain_image(u32 image_index = 0) const override;
     NODISCARD virtual void* get_swapchain_image_view(u32 image_index = 0) const override;
+    NODISCARD ALWAYS_INLINE IDXGISwapChain1* get_swapchain() const { return m_swapchain.handle; }
 
     void reference_swapchain_target_framebuffer(D3D11Framebuffer* framebuffer);
     void dereference_swapchain_target_framebuffer(D3D11Framebuffer* framebuffer);

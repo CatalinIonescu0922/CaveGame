@@ -8,6 +8,8 @@
 
 #include <Core/Assertion.h>
 #include <Renderer/Platform/D3D11/D3D11Renderer.h>
+#include <Renderer/Platform/D3D11/D3D11RenderingContext.h>
+#include <Renderer/Renderer.h>
 
 namespace CaveGame
 {
@@ -81,6 +83,28 @@ void D3D11Renderer::shutdown()
 
     delete s_d3d11_renderer;
     s_d3d11_renderer = nullptr;
+}
+
+void D3D11Renderer::begin_frame()
+{
+    // Get the active rendering context. The generic renderer system is reponsible for ensuring that
+    // the active context is always set correctly.
+    D3D11RenderingContext& context = static_cast<D3D11RenderingContext&>(Renderer::get_rendering_context());
+}
+
+void D3D11Renderer::end_frame()
+{
+    // Get the active rendering context. The generic renderer system is reponsible for ensuring that
+    // the active context is always set correctly.
+    D3D11RenderingContext& context = static_cast<D3D11RenderingContext&>(Renderer::get_rendering_context());
+    
+    const HRESULT swapchain_present_result = context.get_swapchain()->Present(0, 0);
+    if (FAILED(swapchain_present_result))
+    {
+        // The swapchain failed to present the image to the screen.
+        // TODO: Inform the user about this error!
+        return;
+    }
 }
 
 ID3D11Device* D3D11Renderer::get_device()

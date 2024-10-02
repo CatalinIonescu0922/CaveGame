@@ -23,8 +23,12 @@ public:
     static bool initialize(Window* window_context);
     static void shutdown();
 
+    static void begin_frame();
+    static void end_frame();
+
 public:
     static RendererAPI get_renderer_api();
+
     static RenderingContext& get_rendering_context();
 
 private:

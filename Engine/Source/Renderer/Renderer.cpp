@@ -67,6 +67,16 @@ void Renderer::shutdown()
     s_renderer = nullptr;
 }
 
+void Renderer::begin_frame()
+{
+    s_renderer->renderer_interface->begin_frame();
+}
+
+void Renderer::end_frame()
+{
+    s_renderer->renderer_interface->end_frame();
+}
+
 RendererAPI Renderer::get_renderer_api()
 {
     const RendererAPI recommended_renderer_api = get_recommended_renderer_api_for_current_platform();

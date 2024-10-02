@@ -19,11 +19,14 @@ class RendererInterface
     CAVE_MAKE_NONMOVABLE(RendererInterface);
 
 public:
+    RendererInterface() = default;
+    virtual ~RendererInterface() = default;
+
     virtual bool initialize() = 0;
     virtual void shutdown() = 0;
 
-    RendererInterface() = default;
-    virtual ~RendererInterface() = default;
+    virtual void begin_frame() = 0;
+    virtual void end_frame() = 0;
 };
 
 } // namespace CaveGame

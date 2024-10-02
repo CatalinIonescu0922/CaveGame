@@ -85,7 +85,10 @@ void Engine::run(GameLoop& game_loop)
             continue;
         }
 
+        Renderer::begin_frame();
         game_loop.on_game_update(last_frame_delta_time);
+        Renderer::end_frame();
+
         last_frame_delta_time = frame_timer.stop_and_get_elapsed_seconds();
     }
 
