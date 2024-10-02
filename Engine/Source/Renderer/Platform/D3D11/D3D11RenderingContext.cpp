@@ -6,7 +6,9 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+#include <Core/Containers/Optional.h>
 #include <Core/Platform/Window.h>
+#include <Renderer/Framebuffer.h>
 #include <Renderer/RenderingContext.h>
 
 namespace CaveGame
@@ -65,6 +67,9 @@ RenderingContext::RenderingContext(Window* window_context)
 
 RenderingContext::~RenderingContext()
 {
+    // NOTE: If there are still framebuffers alive it means the rendering context shouldn't be deleted, thus
+    // is represents an invalid state. Continuing the execution will cause crashes in unexpected places.
+    CAVE_VERIFY(m_swapchain.referenced_framebuffers.is_empty());
     destroy_swapchain();
 
     CAVE_D3D11_RELEASE(m_dxgi_factory);
@@ -123,16 +128,87 @@ void RenderingContext::invalidate_swapchain(u32 new_width, u32 new_height)
     const HRESULT swapchain_image_create_rtv_result =
         m_device->CreateRenderTargetView(m_swapchain.image_handle, &render_target_view_description, &m_swapchain.image_view_handle);
     CAVE_VERIFY(SUCCEEDED(swapchain_image_create_rtv_result));
+
+    for (Framebuffer* referenced_framebuffer : m_swapchain.referenced_framebuffers)
+    {
+        // Invalidate all referenced framebuffers.
+        referenced_framebuffer->invalidate(0, 0);
+    }
 }
 
 void RenderingContext::destroy_swapchain()
 {
+    // Destroy all framebuffers that are referenced by the swapchain.
+    for (Framebuffer* referenced_framebuffer : m_swapchain.referenced_framebuffers)
+        referenced_framebuffer->destroy();
+
     CAVE_D3D11_RELEASE(m_swapchain.image_view_handle)
     CAVE_D3D11_RELEASE(m_swapchain.image_handle)
     CAVE_D3D11_RELEASE(m_swapchain.handle);
 
     m_swapchain.width = 0;
     m_swapchain.height = 0;
+}
+
+ImageFormat RenderingContext::get_swapchain_image_format() const
+{
+    switch (m_swapchain.format)
+    {
+        case DXGI_FORMAT_UNKNOWN: return ImageFormat ::Unknown;
+        case DXGI_FORMAT_B8G8R8A8_UNORM: return ImageFormat::B8G8R8A8;
+    }
+
+    CAVE_ASSERT(false);
+    return ImageFormat::Unknown;
+}
+
+ID3D11Texture2D* RenderingContext::get_swapchain_image(u32 image_index /*= 0*/) const
+{
+    CAVE_ASSERT(image_index == 0);
+    return m_swapchain.image_handle;
+}
+
+ID3D11RenderTargetView* RenderingContext::get_swapchain_image_view(u32 image_index /*= 0*/) const
+{
+    CAVE_ASSERT(image_index == 0);
+    return m_swapchain.image_view_handle;
+}
+
+void RenderingContext::reference_swapchain_target_framebuffer(Framebuffer& framebuffer)
+{
+    for (const Framebuffer* referenced_framebuffer : m_swapchain.referenced_framebuffers)
+    {
+        // The provided framebuffer is already referenced.
+        if (referenced_framebuffer == &framebuffer)
+            return;
+    }
+
+    // Add the framebuffer to the referenced list.
+    m_swapchain.referenced_framebuffers.add(&framebuffer);
+}
+
+void RenderingContext::dereference_swapchain_target_framebuffer(Framebuffer& framebuffer)
+{
+    Optional<usize> framebuffer_index;
+
+    for (usize index = 0; index < m_swapchain.referenced_framebuffers.count(); ++index)
+    {
+        // The provided framebuffer is already referenced.
+        if (m_swapchain.referenced_framebuffers[index] == &framebuffer)
+        {
+            framebuffer_index = index;
+            break;
+        }
+    }
+
+    if (!framebuffer_index.has_value())
+    {
+        // The provided framebuffer is not referenced. Maybe this should raise an error?
+        return;
+    }
+
+    // Remove the framebuffer from the referenced list.
+    m_swapchain.referenced_framebuffers.remove_unordered(framebuffer_index.value());
 }
 
 } // namespace CaveGame
