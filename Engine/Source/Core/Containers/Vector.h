@@ -202,6 +202,38 @@ public:
 
 public:
     //
+    // Removes the last element stored in the container.
+    // If the container has no elements (is empty), an assert will be triggered.
+    //
+    ALWAYS_INLINE void remove_last()
+    {
+        CAVE_ASSERT(has_elements());
+        m_elements[m_count - 1].~T();
+        --m_count;
+    }
+
+    //
+    // Removes the element stored at the given index by replacing it with the last element stored
+    // in the container and popping it.
+    // If the provided index is out of bounds, an assert will be triggered.
+    //
+    ALWAYS_INLINE void remove_unordered(usize remove_index)
+    {
+        CAVE_ASSERT(remove_index < m_count);
+        
+        if (remove_index < m_count - 1)
+        {
+            // Ensure that the element to remove from the container is not the last.
+            m_elements[remove_index].~T();
+            new (m_elements + remove_index) T(move(m_elements[m_count - 1]));
+        }
+
+        m_elements[m_count - 1].~T();
+        --m_count;
+    }
+
+public:
+    //
     // Destroys all elements stored in the container without releasing the internal memory block,
     // thus the capacity of the vector will remain unchanged.
     //
