@@ -20,6 +20,9 @@ namespace CaveGame
 //
 class RefCounted
 {
+    CAVE_MAKE_NONCOPYABLE(RefCounted);
+    CAVE_MAKE_NONMOVABLE(RefCounted);
+
     template<typename T>
     friend class RefPtr;
 
