@@ -57,6 +57,7 @@ workspace "CaveGame"
         exceptionhandling "off"
         rtti "off"
         characterset "unicode"
+        flags { "MultiProcessorCompile" }
 
         targetdir "%{wks.location}/Binaries/%{cfg.buildcfg}"
         objdir "%{wks.location}/Intermediate"
@@ -97,6 +98,7 @@ workspace "CaveGame"
         exceptionhandling "off"
         rtti "off"
         characterset "unicode"
+        flags { "MultiProcessorCompile" }
 
         targetdir "%{wks.location}/Binaries/%{cfg.buildcfg}"
         objdir "%{wks.location}/Intermediate"
