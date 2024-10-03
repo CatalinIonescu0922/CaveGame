@@ -99,6 +99,7 @@ workspace "CaveGame"
         rtti "off"
         characterset "unicode"
         flags { "MultiProcessorCompile" }
+        debugdir "%{wks.location}/Binaries/%{cfg.buildcfg}"
 
         targetdir "%{wks.location}/Binaries/%{cfg.buildcfg}"
         objdir "%{wks.location}/Intermediate"
