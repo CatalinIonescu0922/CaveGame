@@ -9,9 +9,11 @@
 #pragma once
 
 #include <Core/Containers/RefPtr.h>
+#include <Core/Containers/String.h>
 #include <Core/Containers/Vector.h>
 #include <Core/Math/Color.h>
 #include <Renderer/Framebuffer.h>
+#include <Renderer/Pipeline.h>
 
 namespace CaveGame
 {
@@ -35,7 +37,7 @@ struct RenderPassAttachmentDescription
 {
     RenderPassAttachmentLoadOperation load_operation { RenderPassAttachmentLoadOperation::Load };
     RenderPassAttachmentStoreOperation store_operation { RenderPassAttachmentStoreOperation::Store };
-    
+
     // Only used when the load operation is set to `Clear`. Otherwise, ignored.
     Color4 clear_color;
 };
@@ -44,6 +46,7 @@ struct RenderPassDescription
 {
     RefPtr<Framebuffer> target_framebuffer;
     Vector<RenderPassAttachmentDescription> target_framebuffer_attachments;
+    PipelineDescription pipeline_description;
 };
 
 class RenderPass : public RefCounted

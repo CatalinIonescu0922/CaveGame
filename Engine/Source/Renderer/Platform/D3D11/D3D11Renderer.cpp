@@ -112,6 +112,10 @@ void D3D11Renderer::begin_render_pass(RefPtr<RenderPass> generic_render_pass)
 {
     RefPtr<D3D11RenderPass> render_pass = generic_render_pass.as<D3D11RenderPass>();
     D3D11Framebuffer& target_framebuffer = render_pass->get_target_framebuffer();
+    const PipelineDescription& pipeline = render_pass->get_pipeline_description();
+
+    // Bind the pipeline.
+    // ...
 
     // Get a list with views towards all target framebuffer attachments.
     Vector<ID3D11RenderTargetView*> attachment_rtvs;

@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <Renderer/RenderPass.h>
 #include <Renderer/RendererAPI.h>
 #include <Renderer/RenderingContext.h>
 
@@ -25,6 +26,9 @@ public:
 
     static void begin_frame();
     static void end_frame();
+
+    static void begin_render_pass(RefPtr<RenderPass> render_pass);
+    static void end_render_pass();
 
 public:
     static RendererAPI get_renderer_api();
