@@ -63,7 +63,7 @@ D3D11IndexBuffer::D3D11IndexBuffer(const IndexBufferDescription& description)
     buffer_description.ByteWidth = static_cast<UINT>(m_buffer_size);
     buffer_description.Usage = get_d3d11_usage(description.update_frequency);
     buffer_description.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    buffer_description.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    buffer_description.CPUAccessFlags = 0;
 
     // https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ns-d3d11-d3d11_subresource_data
     D3D11_SUBRESOURCE_DATA initial_data = {};
