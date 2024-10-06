@@ -16,7 +16,7 @@
 namespace CaveGame
 {
 
-NODISCARD static RefPtr<IndexBuffer> create(const IndexBufferDescription& description)
+NODISCARD RefPtr<IndexBuffer> IndexBuffer::create(const IndexBufferDescription& description)
 {
     switch (Renderer::get_renderer_api())
     {
