@@ -23,6 +23,7 @@ public:
         PipelineDescription description;
         u32 vertex_stride { 0 };
         ID3D11InputLayout* input_layout { nullptr };
+        ID3D11RasterizerState* rasterizer_state { nullptr };
     };
 
 public:
@@ -43,6 +44,7 @@ public:
     NODISCARD ALWAYS_INLINE const PipelineDescription& get_pipeline_description() const { return m_pipeline.description; }
     NODISCARD ALWAYS_INLINE u32 get_pipeline_vertex_stride() const { return m_pipeline.vertex_stride; }
     NODISCARD ALWAYS_INLINE ID3D11InputLayout* get_pipeline_input_layout() const { return m_pipeline.input_layout; }
+    NODISCARD ALWAYS_INLINE ID3D11RasterizerState* get_pipeline_rasterizer_state() const { return m_pipeline.rasterizer_state; }
 
 private:
     RefPtr<D3D11Framebuffer> m_target_framebuffer;

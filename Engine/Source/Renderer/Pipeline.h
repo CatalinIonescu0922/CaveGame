@@ -36,10 +36,42 @@ struct PipelineVertexAttribute
     String name;
 };
 
+enum class PipelineTopology : u8
+{
+    Unknown,
+    TriangleList,
+};
+
+enum class PipelineFillMode : u8
+{
+    Unknown = 0,
+    Solid,
+    Wireframe,
+};
+
+enum class PipelineCullMode : u8
+{
+    Unknown = 0,
+    None,
+    Front,
+    Back,
+};
+
+enum class PipelineFrontFaceDirection : u8
+{
+    Unknown = 0,
+    Clockwise,
+    CounterClockwise,
+};
+
 struct PipelineDescription
 {
     RefPtr<Shader> shader;
     Vector<PipelineVertexAttribute> vertex_attributes;
+    PipelineTopology topology { PipelineTopology::TriangleList };
+    PipelineFillMode fill_mode { PipelineFillMode::Solid };
+    PipelineCullMode cull_mode { PipelineCullMode::None };
+    PipelineFrontFaceDirection front_face_direction { PipelineFrontFaceDirection::CounterClockwise };
 };
 
 } // namespace CaveGame

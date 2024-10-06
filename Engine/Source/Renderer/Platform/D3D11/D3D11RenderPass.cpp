@@ -80,6 +80,9 @@ D3D11RenderPass::D3D11RenderPass(const RenderPassDescription& description)
         attribute_offset += get_pipeline_vertex_attribute_type_size(vertex_attribute.type);
     }
 
+    // Set the stride of a vertex.
+    m_pipeline.vertex_stride = attribute_offset;
+
     const ReadonlyByteSpan shader_bytecode = m_pipeline.description.shader.as<D3D11Shader>()->get_shader_module_bytecode(ShaderStage::Vertex);
     // NOTE: The provided shader doesn't have a vertex stage.
     CAVE_ASSERT(shader_bytecode.has_elements());
@@ -92,10 +95,61 @@ D3D11RenderPass::D3D11RenderPass(const RenderPassDescription& description)
         &m_pipeline.input_layout
     );
     CAVE_ASSERT(SUCCEEDED(input_layout_creation_result));
+
+    //
+    // The specification of the rasterizer state.
+    // https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ns-d3d11-d3d11_rasterizer_desc
+    //
+    D3D11_RASTERIZER_DESC rasterizer_description = {};
+    rasterizer_description.DepthBias = 0;
+    rasterizer_description.DepthBiasClamp = 0;
+    rasterizer_description.SlopeScaledDepthBias = 0;
+    rasterizer_description.DepthClipEnable = false;
+    rasterizer_description.ScissorEnable = false;
+    rasterizer_description.MultisampleEnable = false;
+    rasterizer_description.AntialiasedLineEnable = false;
+
+    switch (m_pipeline.description.fill_mode)
+    {
+        case PipelineFillMode::Solid: rasterizer_description.FillMode = D3D11_FILL_SOLID; break;
+        case PipelineFillMode::Wireframe: rasterizer_description.FillMode = D3D11_FILL_WIREFRAME; break;
+
+        default:
+            rasterizer_description.FillMode = D3D11_FILL_SOLID;
+            CAVE_ASSERT(false);
+            break;
+    }
+
+    switch (m_pipeline.description.cull_mode)
+    {
+        case PipelineCullMode::None: rasterizer_description.CullMode = D3D11_CULL_NONE; break;
+        case PipelineCullMode::Front: rasterizer_description.CullMode = D3D11_CULL_FRONT; break;
+        case PipelineCullMode::Back: rasterizer_description.CullMode = D3D11_CULL_BACK; break;
+
+        default:
+            rasterizer_description.CullMode = D3D11_CULL_NONE;
+            CAVE_ASSERT(false);
+            break;
+    }
+
+    switch (m_pipeline.description.front_face_direction)
+    {
+        case PipelineFrontFaceDirection::Clockwise: rasterizer_description.FrontCounterClockwise = true; break;
+        case PipelineFrontFaceDirection::CounterClockwise: rasterizer_description.FrontCounterClockwise = false; break;
+
+        default:
+            rasterizer_description.FrontCounterClockwise = false;
+            CAVE_ASSERT(false);
+            break;
+    }
+
+    const HRESULT rasterizer_state_creation_result = D3D11Renderer::get_device()->CreateRasterizerState(&rasterizer_description, &m_pipeline.rasterizer_state);
+    CAVE_ASSERT(SUCCEEDED(rasterizer_state_creation_result));
 }
 
 D3D11RenderPass::~D3D11RenderPass()
 {
+    CAVE_D3D11_RELEASE(m_pipeline.rasterizer_state);
     CAVE_D3D11_RELEASE(m_pipeline.input_layout);
 
     m_target_framebuffer_attachments.clear_and_shrink();
