@@ -33,6 +33,9 @@ public:
     virtual void end_render_pass() override;
 
 public:
+    virtual void draw_indexed(RefPtr<VertexBuffer> vertex_buffer, RefPtr<IndexBuffer> index_buffer) override;
+
+public:
     static ID3D11Device* get_device();
     static ID3D11DeviceContext* get_device_context();
     static IDXGIFactory2* get_dxgi_factory();

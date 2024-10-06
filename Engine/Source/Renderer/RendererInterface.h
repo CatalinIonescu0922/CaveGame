@@ -8,8 +8,10 @@
 
 #pragma once
 
-#include <Renderer/RendererAPI.h>
+#include <Renderer/IndexBuffer.h>
 #include <Renderer/RenderPass.h>
+#include <Renderer/RendererAPI.h>
+#include <Renderer/VertexBuffer.h>
 
 namespace CaveGame
 {
@@ -31,6 +33,9 @@ public:
 
     virtual void begin_render_pass(RefPtr<RenderPass> render_pass) = 0;
     virtual void end_render_pass() = 0;
+
+public:
+    virtual void draw_indexed(RefPtr<VertexBuffer> vertex_buffer, RefPtr<IndexBuffer> index_buffer) = 0;
 };
 
 } // namespace CaveGame

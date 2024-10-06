@@ -230,6 +230,24 @@ void D3D11Renderer::end_render_pass()
     s_d3d11_renderer->active_render_pass.clear();
 }
 
+void D3D11Renderer::draw_indexed(RefPtr<VertexBuffer> uncasted_vertex_buffer, RefPtr<IndexBuffer> uncasted_index_buffer)
+{
+    CAVE_ASSERT(s_d3d11_renderer->active_render_pass.has_value());
+    RefPtr<D3D11RenderPass> render_pass = s_d3d11_renderer->active_render_pass.value();
+
+    RefPtr<D3D11VertexBuffer> vertex_buffer = uncasted_vertex_buffer.as<D3D11VertexBuffer>();
+    RefPtr<D3D11IndexBuffer> index_buffer = uncasted_index_buffer.as<D3D11IndexBuffer>();
+
+    ID3D11Buffer* vertex_buffer_handle = vertex_buffer->get_handle();
+    const UINT vertex_stride = render_pass->get_pipeline_vertex_stride();
+    const UINT vertex_offset = 0;
+
+    get_device_context()->IASetVertexBuffers(0, 1, &vertex_buffer_handle, &vertex_stride, &vertex_offset);
+    get_device_context()->IASetIndexBuffer(index_buffer->get_handle(), index_buffer->get_data_type_format(), 0);
+
+    get_device_context()->DrawIndexed(index_buffer->get_indices_count(), 0, 0);
+}
+
 ID3D11Device* D3D11Renderer::get_device()
 {
     return s_d3d11_renderer->device;
