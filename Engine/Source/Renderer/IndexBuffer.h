@@ -33,7 +33,7 @@ struct IndexBufferDescription
     IndexBufferUpdateFrequency update_frequency { IndexBufferUpdateFrequency::Normal };
     IndexBufferDataType data_type { IndexBufferDataType::Unknown };
     u32 indices_count { 0 };
-    void* initial_data { nullptr };
+    const void* initial_data { nullptr };
 };
 
 class IndexBuffer : public RefCounted

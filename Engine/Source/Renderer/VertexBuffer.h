@@ -26,7 +26,7 @@ enum class VertexBufferUpdateFrequency : u8
 struct VertexBufferDescription
 {
     VertexBufferUpdateFrequency update_frequency { VertexBufferUpdateFrequency::Normal };
-    void* data { nullptr };
+    const void* data { nullptr };
     usize buffer_size { 0 };
 };
 
