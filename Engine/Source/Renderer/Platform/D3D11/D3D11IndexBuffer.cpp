@@ -78,4 +78,16 @@ D3D11IndexBuffer::~D3D11IndexBuffer()
     CAVE_D3D11_RELEASE(m_handle);
 }
 
+DXGI_FORMAT D3D11IndexBuffer::get_data_type_format() const
+{
+    switch (m_data_type)
+    {
+        case IndexBufferDataType::UInt16: return DXGI_FORMAT_R16_UINT;
+        case IndexBufferDataType::UInt32: return DXGI_FORMAT_R32_UINT;
+    }
+
+    CAVE_ASSERT(false);
+    return DXGI_FORMAT_UNKNOWN;
+}
+
 } // namespace CaveGame
