@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <Core/Containers/Span.h>
 #include <Core/CoreTypes.h>
 
 namespace CaveGame
@@ -37,6 +38,10 @@ public:
 
     NODISCARD ALWAYS_INLINE usize byte_count() const { return m_byte_count; }
     NODISCARD ALWAYS_INLINE bool is_empty() const { return (m_byte_count == 0); }
+
+    NODISCARD ALWAYS_INLINE ReadWriteByteSpan byte_span() { return ReadWriteByteSpan(static_cast<u8*>(m_data), m_byte_count); }
+    NODISCARD ALWAYS_INLINE ReadonlyByteSpan byte_span() const { return ReadonlyByteSpan(static_cast<const u8*>(m_data), m_byte_count); }
+    NODISCARD ALWAYS_INLINE ReadonlyByteSpan readonly_byte_span() const { return ReadonlyByteSpan(static_cast<const u8*>(m_data), m_byte_count); }
 
 public:
     void allocate_new(usize new_byte_count);
