@@ -27,7 +27,7 @@ D3D11Framebuffer::D3D11Framebuffer(const FramebufferDescription& description)
         m_attachments.add(attachment);
     }
 
-    invalidate(description.width, description.heigth);
+    invalidate(description.width, description.height);
 }
 
 D3D11Framebuffer::D3D11Framebuffer(RenderingContext& rendering_context)

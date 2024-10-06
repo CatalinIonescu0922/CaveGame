@@ -41,7 +41,7 @@ struct FramebufferAttachmentDescription
 struct FramebufferDescription
 {
     u32 width;
-    u32 heigth;
+    u32 height;
     Vector<FramebufferAttachmentDescription> attachments;
 };
 
