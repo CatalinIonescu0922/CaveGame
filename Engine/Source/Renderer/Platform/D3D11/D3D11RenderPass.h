@@ -18,6 +18,14 @@ namespace CaveGame
 class D3D11RenderPass : public RenderPass
 {
 public:
+    struct Pipeline
+    {
+        PipelineDescription description;
+        u32 vertex_stride { 0 };
+        ID3D11InputLayout* input_layout { nullptr };
+    };
+
+public:
     explicit D3D11RenderPass(const RenderPassDescription& description);
     virtual ~D3D11RenderPass() override;
 
@@ -32,15 +40,15 @@ public:
         return m_target_framebuffer_attachments[attachment_index];
     }
 
-    NODISCARD ALWAYS_INLINE const PipelineDescription& get_pipeline_description() const { return m_pipeline_description; }
-    NODISCARD ALWAYS_INLINE u32 get_pipeline_vertex_stride() const { return m_pipeline_vertex_stride; }
+    NODISCARD ALWAYS_INLINE const PipelineDescription& get_pipeline_description() const { return m_pipeline.description; }
+    NODISCARD ALWAYS_INLINE u32 get_pipeline_vertex_stride() const { return m_pipeline.vertex_stride; }
+    NODISCARD ALWAYS_INLINE ID3D11InputLayout* get_pipeline_input_layout() const { return m_pipeline.input_layout; }
 
 private:
     RefPtr<D3D11Framebuffer> m_target_framebuffer;
     Vector<RenderPassAttachmentDescription> m_target_framebuffer_attachments;
 
-    PipelineDescription m_pipeline_description;
-    u32 m_pipeline_vertex_stride;
+    Pipeline m_pipeline;
 };
 
 } // namespace CaveGame

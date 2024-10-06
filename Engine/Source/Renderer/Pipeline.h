@@ -10,6 +10,7 @@
 
 #include <Core/Containers/String.h>
 #include <Core/Containers/Vector.h>
+#include <Renderer/Shader.h>
 
 namespace CaveGame
 {
@@ -37,6 +38,7 @@ struct PipelineVertexAttribute
 
 struct PipelineDescription
 {
+    RefPtr<Shader> shader;
     Vector<PipelineVertexAttribute> vertex_attributes;
 };
 
