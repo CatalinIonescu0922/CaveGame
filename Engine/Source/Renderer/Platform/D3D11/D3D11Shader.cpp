@@ -60,6 +60,18 @@ IUnknown* D3D11Shader::get_shader_module(ShaderStage stage)
     return nullptr;
 }
 
+ReadonlyByteSpan D3D11Shader::get_shader_module_bytecode(ShaderStage stage) const
+{
+    for (const ShaderModule& shader_module : m_shader_modules)
+    {
+        if (shader_module.stage == stage)
+            return shader_module.bytecode.byte_span();
+    }
+
+    // Return an empty byte span as the provided shader stage is not present.
+    return {};
+}
+
 NODISCARD ALWAYS_INLINE static const char* get_shader_entrypoint_name(ShaderStage stage)
 {
     switch (stage)
@@ -128,10 +140,6 @@ D3D11Shader::ShaderModule D3D11Shader::create_shader_module(const ShaderStageDes
     ShaderModule shader_module = {};
     shader_module.stage = description.stage;
 
-    void* bytecode_data = nullptr;
-    usize bytecode_size = 0;
-    Buffer compiled_bytecode;
-
     if (description.source_type == ShaderSourceType::SourceCode)
     {
         // No shadersource code has been provided.
@@ -147,23 +155,23 @@ D3D11Shader::ShaderModule D3D11Shader::create_shader_module(const ShaderStageDes
         // The compilation process failed, even if no error messages were generated.
         CAVE_ASSERT(SUCCEEDED(compilation_result.result));
 
-        compiled_bytecode = move(compilation_result.bytecode);
-        bytecode_data = compiled_bytecode.data();
-        bytecode_size = compiled_bytecode.byte_count();
+        shader_module.bytecode = move(compilation_result.bytecode);
     }
     else if (description.source_type == ShaderSourceType::Bytecode)
     {
         // No bytecode data has been provided.
-        CAVE_ASSERT(description.source_bytecode_size > 0);
+        CAVE_ASSERT(description.source_bytecode.has_elements());
 
-        bytecode_data = description.source_bytecode_data;
-        bytecode_size = description.source_bytecode_size;
+        shader_module.bytecode = Buffer::copy(description.source_bytecode.elements(), description.source_bytecode.count());
     }
     else
     {
         // Invalid code path.
         CAVE_VERIFY(false);
     }
+
+    const void* bytecode_data = shader_module.bytecode.data();
+    const usize bytecode_size = shader_module.bytecode.byte_count();
 
     switch (description.stage)
     {
@@ -188,8 +196,6 @@ D3D11Shader::ShaderModule D3D11Shader::create_shader_module(const ShaderStageDes
         break;
     }
 
-    // The compiled bytecode buffer is not empty only when the shader source type was set to `SourceCode`.
-    compiled_bytecode.release();
     return shader_module;
 }
 

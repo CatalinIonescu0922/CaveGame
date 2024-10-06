@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <Core/Containers/Span.h>
 #include <Core/Memory/Buffer.h>
 #include <Renderer/Platform/D3D11/D3D11GuardedInclude.h>
 #include <Renderer/Shader.h>
@@ -22,6 +23,7 @@ public:
     {
         ShaderStage stage;
         IUnknown* handle;
+        Buffer bytecode;
     };
 
 public:
@@ -45,6 +47,8 @@ public:
     // If the stage doesn't exist, this function will return nullptr.
     //
     NODISCARD IUnknown* get_shader_module(ShaderStage stage);
+
+    NODISCARD ReadonlyByteSpan get_shader_module_bytecode(ShaderStage stage) const;
 
 private:
     struct ShaderCompilationResult

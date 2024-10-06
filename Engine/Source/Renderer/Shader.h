@@ -9,6 +9,7 @@
 #pragma once
 
 #include <Core/Containers/RefPtr.h>
+#include <Core/Containers/Span.h>
 #include <Core/Containers/StringView.h>
 #include <Core/Containers/Vector.h>
 
@@ -38,8 +39,7 @@ struct ShaderStageDescription
     StringView source_code;
 
     // Only used when the shader stage source type is set to `Bytecode`.
-    void* source_bytecode_data;
-    usize source_bytecode_size;
+    ReadonlyByteSpan source_bytecode;
 };
 
 struct ShaderDescription
