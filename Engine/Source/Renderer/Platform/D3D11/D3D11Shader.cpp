@@ -48,27 +48,15 @@ D3D11Shader::~D3D11Shader()
     m_shader_modules.clear_and_shrink();
 }
 
-IUnknown* D3D11Shader::get_shader_module(ShaderStage stage)
-{
-    for (ShaderModule& shader_module : m_shader_modules)
-    {
-        if (shader_module.stage == stage)
-            return shader_module.handle;
-    }
-
-    // The given shader stage doesn't exist.
-    return nullptr;
-}
-
-ReadonlyByteSpan D3D11Shader::get_shader_module_bytecode(ShaderStage stage) const
+Optional<const D3D11Shader::ShaderModule&> D3D11Shader::get_shader_module(ShaderStage stage) const
 {
     for (const ShaderModule& shader_module : m_shader_modules)
     {
         if (shader_module.stage == stage)
-            return shader_module.bytecode.byte_span();
+            return shader_module;
     }
 
-    // Return an empty byte span as the provided shader stage is not present.
+    // The given shader stage doesn't exist.
     return {};
 }
 
