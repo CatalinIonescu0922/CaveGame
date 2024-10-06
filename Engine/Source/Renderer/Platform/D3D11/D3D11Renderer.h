@@ -14,6 +14,9 @@
 namespace CaveGame
 {
 
+// Forward declarations.
+class D3D11RenderPass;
+
 class D3D11Renderer : public RendererInterface
 {
 public:
@@ -33,6 +36,10 @@ public:
     static ID3D11Device* get_device();
     static ID3D11DeviceContext* get_device_context();
     static IDXGIFactory2* get_dxgi_factory();
+
+private:
+    static void bind_pipeline(D3D11RenderPass& render_pass);
+    static void bind_target_framebuffer(D3D11RenderPass& render_pass);
 };
 
 } // namespace CaveGame

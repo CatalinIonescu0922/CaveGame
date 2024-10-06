@@ -7,9 +7,12 @@
  */
 
 #include <Core/Assertion.h>
+#include <Renderer/Platform/D3D11/D3D11IndexBuffer.h>
 #include <Renderer/Platform/D3D11/D3D11RenderPass.h>
 #include <Renderer/Platform/D3D11/D3D11Renderer.h>
 #include <Renderer/Platform/D3D11/D3D11RenderingContext.h>
+#include <Renderer/Platform/D3D11/D3D11Shader.h>
+#include <Renderer/Platform/D3D11/D3D11VertexBuffer.h>
 #include <Renderer/Renderer.h>
 
 namespace CaveGame
@@ -20,6 +23,8 @@ struct D3D11RendererData
     ID3D11Device* device { nullptr };
     ID3D11DeviceContext* device_context { nullptr };
     IDXGIFactory2* dxgi_factory { nullptr };
+
+    Optional<RefPtr<D3D11RenderPass>> active_render_pass;
 };
 
 static D3D11RendererData* s_d3d11_renderer;
@@ -108,14 +113,66 @@ void D3D11Renderer::end_frame()
     }
 }
 
-void D3D11Renderer::begin_render_pass(RefPtr<RenderPass> generic_render_pass)
+void D3D11Renderer::bind_pipeline(D3D11RenderPass& render_pass)
 {
-    RefPtr<D3D11RenderPass> render_pass = generic_render_pass.as<D3D11RenderPass>();
-    D3D11Framebuffer& target_framebuffer = render_pass->get_target_framebuffer();
-    const PipelineDescription& pipeline = render_pass->get_pipeline_description();
+    // Get the pipeline description corresponding to the given render pass.
+    const PipelineDescription& pipeline = render_pass.get_pipeline_description();
 
-    // Bind the pipeline.
-    // ...
+    //====================================================
+    // INPUT-ASSEMBLER (IA) STAGE.
+    //====================================================
+
+    // https://learn.microsoft.com/en-us/windows/win32/api/d3d11/nf-d3d11-id3d11devicecontext-iasetinputlayout
+    get_device_context()->IASetInputLayout(render_pass.get_pipeline_input_layout());
+
+    D3D11_PRIMITIVE_TOPOLOGY primitive_topology = D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED;
+    switch (pipeline.topology)
+    {
+        case PipelineTopology::TriangleList: primitive_topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST; break;
+    }
+
+    // https://learn.microsoft.com/en-us/windows/win32/api/d3d11/nf-d3d11-id3d11devicecontext-iasetprimitivetopology
+    get_device_context()->IASetPrimitiveTopology(primitive_topology);
+
+    //====================================================
+    // SHADER STAGES.
+    //====================================================
+
+    RefPtr<D3D11Shader> shader = pipeline.shader.as<D3D11Shader>();
+    const auto& shader_modules = shader->get_shader_modules();
+    for (const D3D11Shader::ShaderModule& shader_module : shader_modules)
+    {
+        switch (shader_module.stage)
+        {
+            case ShaderStage::Vertex: get_device_context()->VSSetShader(static_cast<ID3D11VertexShader*>(shader_module.handle), nullptr, 0); break;
+            case ShaderStage::Fragment: get_device_context()->PSSetShader(static_cast<ID3D11PixelShader*>(shader_module.handle), nullptr, 0); break;
+
+            default: CAVE_ASSERT(false); break;
+        }
+    }
+
+    //====================================================
+    // RASTERIZER (RS) STAGE.
+    //====================================================
+
+    get_device_context()->RSSetState(render_pass.get_pipeline_rasterizer_state());
+
+    // https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ns-d3d11-d3d11_viewport
+    D3D11_VIEWPORT viewport = {};
+    viewport.TopLeftX = 0;
+    viewport.TopLeftY = 0;
+    viewport.Width = static_cast<FLOAT>(render_pass.get_target_framebuffer().get_width());
+    viewport.Height = static_cast<FLOAT>(render_pass.get_target_framebuffer().get_height());
+    viewport.MinDepth = 0.0F;
+    viewport.MaxDepth = 1.0F;
+
+    // https://learn.microsoft.com/en-us/windows/win32/api/d3d11/nf-d3d11-id3d11devicecontext-rssetviewports
+    get_device_context()->RSSetViewports(1, &viewport);
+}
+
+void D3D11Renderer::bind_target_framebuffer(D3D11RenderPass& render_pass)
+{
+    D3D11Framebuffer& target_framebuffer = render_pass.get_target_framebuffer();
 
     // Get a list with views towards all target framebuffer attachments.
     Vector<ID3D11RenderTargetView*> attachment_rtvs;
@@ -129,7 +186,7 @@ void D3D11Renderer::begin_render_pass(RefPtr<RenderPass> generic_render_pass)
     // Clear the framebuffer attachment if the load operation is set to `Clear`.
     for (u32 attachment_index = 0; attachment_index < target_framebuffer.get_attachment_count(); ++attachment_index)
     {
-        const RenderPassAttachmentDescription& render_pass_attachment = render_pass->get_target_framebuffer_attachment(attachment_index);
+        const RenderPassAttachmentDescription& render_pass_attachment = render_pass.get_target_framebuffer_attachment(attachment_index);
         if (render_pass_attachment.load_operation == RenderPassAttachmentLoadOperation::Clear)
         {
             ID3D11RenderTargetView* attachment_view = static_cast<ID3D11RenderTargetView*>(target_framebuffer.get_attachment_image_view(attachment_index));
@@ -145,8 +202,33 @@ void D3D11Renderer::begin_render_pass(RefPtr<RenderPass> generic_render_pass)
     }
 }
 
+void D3D11Renderer::begin_render_pass(RefPtr<RenderPass> generic_render_pass)
+{
+    if (s_d3d11_renderer->active_render_pass.has_value())
+    {
+        // A render pass is already active!
+        CAVE_ASSERT(false);
+        return;
+    }
+
+    RefPtr<D3D11RenderPass> render_pass = generic_render_pass.as<D3D11RenderPass>();
+    s_d3d11_renderer->active_render_pass = render_pass;
+
+    bind_pipeline(*render_pass);
+    bind_target_framebuffer(*render_pass);
+}
+
 void D3D11Renderer::end_render_pass()
-{}
+{
+    if (!s_d3d11_renderer->active_render_pass.has_value())
+    {
+        // No render pass is currently active!
+        CAVE_ASSERT(false);
+        return;
+    }
+
+    s_d3d11_renderer->active_render_pass.clear();
+}
 
 ID3D11Device* D3D11Renderer::get_device()
 {
