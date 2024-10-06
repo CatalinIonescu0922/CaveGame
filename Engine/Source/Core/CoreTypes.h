@@ -74,6 +74,12 @@ template<typename T> struct RemoveConst<const T>    { using Type = T; };
 template<typename T> struct RemovePointer           { using Type = T; };
 template<typename T> struct RemovePointer<T*>       { using Type = T; };
 
+template<typename T> struct IsConst                 { static constexpr bool value = false; };
+template<typename T> struct IsConst<const T>        { static constexpr bool value = true; };
+
+template<typename T1, typename T2>  struct IsSame       { static constexpr bool value = false; };
+template<typename T>                struct IsSame<T, T> { static constexpr bool value = true; };
+
 } // namespace Detail
 // clang-format on
 
@@ -90,6 +96,18 @@ using RemoveReference = typename Detail::RemoveReference<T>::Type;
 //
 template<typename T>
 using RemoveConst = typename Detail::RemoveConst<T>::Type;
+
+//
+// Checks whether or not the provided typename is marked as `const`.
+//
+template<typename T>
+constexpr bool is_const = Detail::IsConst<T>::value;
+
+//
+// Checks whether or not the provided types are actually the same type.
+//
+template<typename T1, typename T2>
+constexpr bool is_same = Detail::IsSame<T1, T2>::value;
 
 // Wrapper around `std::is_base_of_v`.
 template<typename DerivedType, typename BaseType>
