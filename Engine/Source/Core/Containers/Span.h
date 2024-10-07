@@ -94,6 +94,32 @@ public:
         const usize byte_count = m_count * sizeof(T);
         return Span<const u8>(reinterpret_cast<const u8*>(m_elements), byte_count);
     }
+
+public:
+    NODISCARD ALWAYS_INLINE Span slice(usize offset, usize count)
+    {
+        CAVE_ASSERT(offset + count <= m_count);
+        return Span(m_elements + offset, count);
+    }
+
+    NODISCARD ALWAYS_INLINE Span slice(usize offset)
+    {
+        CAVE_ASSERT(offset <= m_count);
+        return Span(m_elements + offset, m_count - offset);
+    }
+
+    NODISCARD ALWAYS_INLINE Span<const T> slice(usize offset, usize count) const
+    {
+        CAVE_ASSERT(offset + count <= m_count);
+        return Span<const T>(m_elements + offset, count);
+    }
+
+    NODISCARD ALWAYS_INLINE Span<const T> slice(usize offset) const
+    {
+        CAVE_ASSERT(offset <= m_count);
+        return Span<const T>(m_elements + offset, m_count - offset);
+    }
+
 private:
     T* m_elements;
     usize m_count;
