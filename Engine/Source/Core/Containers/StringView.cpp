@@ -20,6 +20,11 @@ StringView StringView::create_from_utf8(const char* characters, usize byte_count
     return view;
 }
 
+StringView StringView::create_from_utf8(ReadonlyByteSpan character_byte_span)
+{
+    return create_from_utf8(reinterpret_cast<const char*>(character_byte_span.elements()), character_byte_span.count());
+}
+
 StringView StringView::create_from_utf8(const char* null_terminated_characters)
 {
     CAVE_ASSERT(null_terminated_characters != nullptr);

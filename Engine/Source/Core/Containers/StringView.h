@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <Core/Containers/Span.h>
 #include <Core/CoreTypes.h>
 
 namespace CaveGame
@@ -30,6 +31,7 @@ class StringView
 
 public:
     NODISCARD static StringView create_from_utf8(const char* characters, usize byte_count);
+    NODISCARD static StringView create_from_utf8(ReadonlyByteSpan character_byte_span);
     NODISCARD static StringView create_from_utf8(const char* null_terminated_characters);
 
 public:
