@@ -87,6 +87,12 @@ void Renderer::end_render_pass()
     s_renderer->renderer_interface->end_render_pass();
 }
 
+void Renderer::draw_indexed(RefPtr<VertexBuffer> vertex_buffer, RefPtr<IndexBuffer> index_buffer, u32 indices_count)
+{
+    CAVE_ASSERT(s_renderer->renderer_interface.is_valid());
+    s_renderer->renderer_interface->draw_indexed(vertex_buffer, index_buffer, indices_count);
+}
+
 RendererAPI Renderer::get_renderer_api()
 {
     const RendererAPI recommended_renderer_api = get_recommended_renderer_api_for_current_platform();
