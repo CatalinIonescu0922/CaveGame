@@ -28,6 +28,7 @@ public:
 private:
     ID3D11Buffer* m_handle;
     usize m_buffer_size;
+    VertexBufferUpdateFrequency m_update_frequency;
 };
 
 } // namespace CaveGame

@@ -28,13 +28,20 @@ NODISCARD ALWAYS_INLINE static D3D11_USAGE get_d3d11_usage(VertexBufferUpdateFre
 D3D11VertexBuffer::D3D11VertexBuffer(const VertexBufferDescription& description)
     : m_handle(nullptr)
     , m_buffer_size(description.buffer_size)
+    , m_update_frequency(description.update_frequency)
 {
-    if (description.update_frequency == VertexBufferUpdateFrequency::Never)
+    UINT buffer_read_write_access = 0;
+
+    if (m_update_frequency == VertexBufferUpdateFrequency::Never)
     {
         // An immutable buffer must always have an initial data buffer to initialize it with, as there is no
         // method to update its content afterwards.
         // TODO: Inform the user about this error!
         CAVE_ASSERT(description.data != nullptr);
+    }
+    else
+    {
+        buffer_read_write_access |= D3D11_CPU_ACCESS_WRITE;
     }
 
     //
@@ -43,15 +50,16 @@ D3D11VertexBuffer::D3D11VertexBuffer(const VertexBufferDescription& description)
     //
     D3D11_BUFFER_DESC buffer_description = {};
     buffer_description.ByteWidth = static_cast<UINT>(m_buffer_size);
-    buffer_description.Usage = get_d3d11_usage(description.update_frequency);
+    buffer_description.Usage = get_d3d11_usage(m_update_frequency);
     buffer_description.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    buffer_description.CPUAccessFlags = 0;
+    buffer_description.CPUAccessFlags = buffer_read_write_access;
 
     // https://learn.microsoft.com/en-us/windows/win32/api/d3d11/ns-d3d11-d3d11_subresource_data
     D3D11_SUBRESOURCE_DATA initial_data = {};
     initial_data.pSysMem = description.data;
 
-    const HRESULT buffer_creation_result = D3D11Renderer::get_device()->CreateBuffer(&buffer_description, &initial_data, &m_handle);
+    const HRESULT buffer_creation_result =
+        D3D11Renderer::get_device()->CreateBuffer(&buffer_description, (description.data != nullptr) ? &initial_data : nullptr, &m_handle);
     CAVE_ASSERT(SUCCEEDED(buffer_creation_result));
 }
 
