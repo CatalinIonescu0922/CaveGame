@@ -230,7 +230,7 @@ void D3D11Renderer::end_render_pass()
     s_d3d11_renderer->active_render_pass.clear();
 }
 
-void D3D11Renderer::draw_indexed(RefPtr<VertexBuffer> uncasted_vertex_buffer, RefPtr<IndexBuffer> uncasted_index_buffer)
+void D3D11Renderer::draw_indexed(RefPtr<VertexBuffer> uncasted_vertex_buffer, RefPtr<IndexBuffer> uncasted_index_buffer, u32 indices_count)
 {
     CAVE_ASSERT(s_d3d11_renderer->active_render_pass.has_value());
     RefPtr<D3D11RenderPass> render_pass = s_d3d11_renderer->active_render_pass.value();
@@ -245,7 +245,8 @@ void D3D11Renderer::draw_indexed(RefPtr<VertexBuffer> uncasted_vertex_buffer, Re
     get_device_context()->IASetVertexBuffers(0, 1, &vertex_buffer_handle, &vertex_stride, &vertex_offset);
     get_device_context()->IASetIndexBuffer(index_buffer->get_handle(), index_buffer->get_data_type_format(), 0);
 
-    get_device_context()->DrawIndexed(index_buffer->get_indices_count(), 0, 0);
+    CAVE_ASSERT(indices_count <= index_buffer->get_indices_count());
+    get_device_context()->DrawIndexed(indices_count, 0, 0);
 }
 
 ID3D11Device* D3D11Renderer::get_device()

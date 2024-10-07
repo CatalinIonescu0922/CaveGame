@@ -35,7 +35,7 @@ public:
     virtual void end_render_pass() = 0;
 
 public:
-    virtual void draw_indexed(RefPtr<VertexBuffer> vertex_buffer, RefPtr<IndexBuffer> index_buffer) = 0;
+    virtual void draw_indexed(RefPtr<VertexBuffer> vertex_buffer, RefPtr<IndexBuffer> index_buffer, u32 indices_count) = 0;
 };
 
 } // namespace CaveGame
