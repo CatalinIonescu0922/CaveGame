@@ -9,6 +9,7 @@
 #pragma once
 
 #include <Core/Assertion.h>
+#include <Core/Containers/Span.h>
 #include <Core/CoreTypes.h>
 #include <Core/Memory/New.h>
 
@@ -113,6 +114,31 @@ public:
 
     NODISCARD ALWAYS_INLINE bool is_empty() const { return (m_count == 0); }
     NODISCARD ALWAYS_INLINE bool has_elements() const { return (m_count > 0); }
+
+public:
+    NODISCARD ALWAYS_INLINE Span<T> slice(usize offset, usize count)
+    {
+        CAVE_ASSERT(offset + count <= m_count);
+        return Span<T>(m_elements + offset, count);
+    }
+
+    NODISCARD ALWAYS_INLINE Span<T> slice(usize offset)
+    {
+        CAVE_ASSERT(offset <= m_count);
+        return Span<T>(m_elements + offset, m_count - offset);
+    }
+
+    NODISCARD ALWAYS_INLINE Span<const T> slice(usize offset, usize count) const
+    {
+        CAVE_ASSERT(offset + count <= m_count);
+        return Span<const T>(m_elements + offset, count);
+    }
+
+    NODISCARD ALWAYS_INLINE Span<const T> slice(usize offset) const
+    {
+        CAVE_ASSERT(offset <= m_count);
+        return Span<const T>(m_elements + offset, m_count - offset);
+    }
 
 public:
     //
