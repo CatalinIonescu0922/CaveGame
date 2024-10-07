@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0.
  */
 
+#include <Core/Memory/MemoryOperations.h>
 #include <Renderer/Platform/D3D11/D3D11Renderer.h>
 #include <Renderer/Platform/D3D11/D3D11VertexBuffer.h>
 
@@ -66,6 +67,35 @@ D3D11VertexBuffer::D3D11VertexBuffer(const VertexBufferDescription& description)
 D3D11VertexBuffer::~D3D11VertexBuffer()
 {
     CAVE_D3D11_RELEASE(m_handle);
+}
+
+void D3D11VertexBuffer::upload_data(ReadonlyByteSpan data_byte_span)
+{
+    if (m_update_frequency == VertexBufferUpdateFrequency::Never)
+    {
+        // NOTE: Inform the caller about this error!
+        CAVE_ASSERT(false);
+        return;
+    }
+
+    if (m_update_frequency == VertexBufferUpdateFrequency::Often)
+    {
+        // Map the buffer memory.
+        D3D11_MAPPED_SUBRESOURCE buffer_subresouce = {};
+        const HRESULT buffer_mapping_result = D3D11Renderer::get_device_context()->Map(m_handle, 0, D3D11_MAP_WRITE_DISCARD, 0, &buffer_subresouce);
+        CAVE_ASSERT(SUCCEEDED(buffer_mapping_result));
+
+        // Copy the provided data to the buffer memory.
+        copy_memory(buffer_subresouce.pData, data_byte_span.elements(), data_byte_span.count());
+
+        // Unmap the buffer memory.
+        D3D11Renderer::get_device_context()->Unmap(m_handle, 0);
+    }
+    else
+    {
+        // Invalid buffer update frequency.
+        CAVE_ASSERT(false);
+    }
 }
 
 } // namespace CaveGame

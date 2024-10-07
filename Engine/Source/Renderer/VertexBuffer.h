@@ -39,6 +39,7 @@ public:
     virtual ~VertexBuffer() override = default;
 
 public:
+    virtual void upload_data(ReadonlyByteSpan data_byte_span) = 0;
 };
 
 } // namespace CaveGame

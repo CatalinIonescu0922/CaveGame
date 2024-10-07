@@ -25,6 +25,9 @@ public:
 
     NODISCARD ALWAYS_INLINE usize get_size() const { return m_buffer_size; }
 
+public:
+    virtual void upload_data(ReadonlyByteSpan data_byte_span) override;
+
 private:
     ID3D11Buffer* m_handle;
     usize m_buffer_size;
