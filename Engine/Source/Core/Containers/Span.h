@@ -89,6 +89,11 @@ public:
     NODISCARD ALWAYS_INLINE bool is_empty() const { return (m_count == 0); }
     NODISCARD ALWAYS_INLINE bool has_elements() const { return (m_count > 0); }
 
+    NODISCARD ALWAYS_INLINE Span<const u8> readonly_byte_span() const
+    {
+        const usize byte_count = m_count * sizeof(T);
+        return Span<const u8>(reinterpret_cast<const u8*>(m_elements), byte_count);
+    }
 private:
     T* m_elements;
     usize m_count;
