@@ -25,6 +25,7 @@ NODISCARD ALWAYS_INLINE DXGI_FORMAT get_d3d11_image_format(ImageFormat image_for
     {
         case ImageFormat::Unknown: return DXGI_FORMAT_UNKNOWN;
         case ImageFormat::B8G8R8A8: return DXGI_FORMAT_B8G8R8A8_UNORM;
+        case ImageFormat::R8G8B8A8: return DXGI_FORMAT_R8G8B8A8_UNORM;
     }
 
     CAVE_ASSERT(false);

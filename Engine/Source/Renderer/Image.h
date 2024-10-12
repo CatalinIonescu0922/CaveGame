@@ -17,6 +17,7 @@ enum class ImageFormat : u32
 {
 	Unknown = 0,
 	B8G8R8A8,
+	R8G8B8A8,
 };
 
 enum class ImageFilteringMode : u8
