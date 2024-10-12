@@ -22,6 +22,10 @@ NODISCARD ALWAYS_INLINE static u32 get_pipeline_vertex_attribute_type_size(Pipel
         case PipelineVertexAttributeType::Float2: return 8;
         case PipelineVertexAttributeType::Float3: return 12;
         case PipelineVertexAttributeType::Float4: return 16;
+
+        case PipelineVertexAttributeType::UInt8: return 1;
+        case PipelineVertexAttributeType::UInt16: return 2;
+        case PipelineVertexAttributeType::UInt32: return 4;
     }
 
     CAVE_ASSERT(false);
@@ -36,6 +40,10 @@ NODISCARD ALWAYS_INLINE static DXGI_FORMAT get_pipeline_vertex_attribute_type_fo
         case PipelineVertexAttributeType::Float2: return DXGI_FORMAT_R32G32_FLOAT;
         case PipelineVertexAttributeType::Float3: return DXGI_FORMAT_R32G32B32_FLOAT;
         case PipelineVertexAttributeType::Float4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+
+        case PipelineVertexAttributeType::UInt8: return DXGI_FORMAT_R8_UINT;
+        case PipelineVertexAttributeType::UInt16: return DXGI_FORMAT_R16_UINT;
+        case PipelineVertexAttributeType::UInt32: return DXGI_FORMAT_R32_UINT;
     }
 
     CAVE_ASSERT(false);

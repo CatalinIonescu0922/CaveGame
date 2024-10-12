@@ -22,6 +22,10 @@ enum class PipelineVertexAttributeType : u16
     Float2,
     Float3,
     Float4,
+
+    UInt8,
+    UInt16,
+    UInt32,
 };
 
 struct PipelineVertexAttribute
