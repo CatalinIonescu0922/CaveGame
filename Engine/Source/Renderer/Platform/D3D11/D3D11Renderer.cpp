@@ -12,6 +12,7 @@
 #include <Renderer/Platform/D3D11/D3D11Renderer.h>
 #include <Renderer/Platform/D3D11/D3D11RenderingContext.h>
 #include <Renderer/Platform/D3D11/D3D11Shader.h>
+#include <Renderer/Platform/D3D11/D3D11Texture.h>
 #include <Renderer/Platform/D3D11/D3D11VertexBuffer.h>
 #include <Renderer/Renderer.h>
 
@@ -247,6 +248,15 @@ void D3D11Renderer::draw_indexed(RefPtr<VertexBuffer> uncasted_vertex_buffer, Re
 
     CAVE_ASSERT(indices_count <= index_buffer->get_indices_count());
     get_device_context()->DrawIndexed(indices_count, 0, 0);
+}
+
+void D3D11Renderer::bind_input_texture(RefPtr<Texture> texture, u32 bind_slot_index)
+{
+    ID3D11ShaderResourceView* shader_resource_view = texture.as<D3D11Texture>()->get_view_handle();
+    get_device_context()->PSSetShaderResources(bind_slot_index, 1, &shader_resource_view);
+
+    ID3D11SamplerState* sampler_state = texture.as<D3D11Texture>()->get_sampler_state();
+    get_device_context()->PSSetSamplers(bind_slot_index, 1, &sampler_state);
 }
 
 ID3D11Device* D3D11Renderer::get_device()

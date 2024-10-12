@@ -93,6 +93,12 @@ void Renderer::draw_indexed(RefPtr<VertexBuffer> vertex_buffer, RefPtr<IndexBuff
     s_renderer->renderer_interface->draw_indexed(vertex_buffer, index_buffer, indices_count);
 }
 
+void Renderer::bind_input_texture(RefPtr<Texture> texture, u32 bind_slot_index)
+{
+    CAVE_ASSERT(s_renderer->renderer_interface.is_valid());
+    s_renderer->renderer_interface->bind_input_texture(texture, bind_slot_index);
+}
+
 RendererAPI Renderer::get_renderer_api()
 {
     const RendererAPI recommended_renderer_api = get_recommended_renderer_api_for_current_platform();

@@ -11,6 +11,7 @@
 #include <Renderer/IndexBuffer.h>
 #include <Renderer/RenderPass.h>
 #include <Renderer/RendererAPI.h>
+#include <Renderer/Texture.h>
 #include <Renderer/VertexBuffer.h>
 
 namespace CaveGame
@@ -33,6 +34,9 @@ public:
 
     virtual void begin_render_pass(RefPtr<RenderPass> render_pass) = 0;
     virtual void end_render_pass() = 0;
+
+public:
+    virtual void bind_input_texture(RefPtr<Texture> texture, u32 bind_slot_index) = 0;
 
 public:
     virtual void draw_indexed(RefPtr<VertexBuffer> vertex_buffer, RefPtr<IndexBuffer> index_buffer, u32 indices_count) = 0;
