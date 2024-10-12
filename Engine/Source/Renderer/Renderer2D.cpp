@@ -59,8 +59,36 @@ void Renderer2D::submit_quad(Vector2 translation, Vector2 scale, Color4 color)
     if (m_current_number_of_quads >= m_max_quads_per_batch)
         flush_quad_batch();
 
+    Optional<u32> texture_index = find_quad_texture_index(Renderer::get_white_texture());
+    if (!texture_index.has_value())
+    {
+        flush_quad_batch();
+        texture_index = find_quad_texture_index(Renderer::get_white_texture());
+        CAVE_ASSERT(texture_index.has_value());
+    }
+
     QuadVertex* vertices = m_quad_vertices.elements() + (4 * m_current_number_of_quads);
-    construct_quad(vertices, translation, scale, color);
+    construct_quad(vertices, translation, scale, color, texture_index.value(), 1.0F);
+
+    m_current_number_of_quads++;
+    m_total_number_of_quads++;
+}
+
+void Renderer2D::submit_textured_quad(Vector2 translation, Vector2 scale, RefPtr<Texture> texture, Color4 tint_color /*= Color4(1)*/)
+{
+    if (m_current_number_of_quads >= m_max_quads_per_batch)
+        flush_quad_batch();
+
+    Optional<u32> texture_index = find_quad_texture_index(texture);
+    if (!texture_index.has_value())
+    {
+        flush_quad_batch();
+        texture_index = find_quad_texture_index(texture);
+        CAVE_ASSERT(texture_index.has_value());
+    }
+
+    QuadVertex* vertices = m_quad_vertices.elements() + (4 * m_current_number_of_quads);
+    construct_quad(vertices, translation, scale, tint_color, texture_index.value(), 1.0F);
 
     m_current_number_of_quads++;
     m_total_number_of_quads++;
@@ -74,6 +102,9 @@ void Renderer2D::initialize_quad_rendering()
 
     m_max_quads_per_batch = 4096;
     m_quad_vertices.set_count_uninitialized(4 * m_max_quads_per_batch);
+
+    m_max_textures_per_batch = 16;
+    m_quad_textures.set_capacity(m_max_textures_per_batch);
 
     m_current_number_of_quads = 0;
     m_total_number_of_quads = 0;
@@ -120,11 +151,13 @@ void Renderer2D::initialize_quad_rendering()
     render_pass_description.pipeline_description.shader = m_quad_shader;
     render_pass_description.pipeline_description.vertex_attributes.add({ PipelineVertexAttributeType::Float2, "POSITION"sv });
     render_pass_description.pipeline_description.vertex_attributes.add({ PipelineVertexAttributeType::Float4, "COLOR"sv });
+    render_pass_description.pipeline_description.vertex_attributes.add({ PipelineVertexAttributeType::Float2, "TEXTURE_COORDINATES"sv });
+    render_pass_description.pipeline_description.vertex_attributes.add({ PipelineVertexAttributeType::UInt32, "TEXTURE_INDEX"sv });
     render_pass_description.target_framebuffer = m_target_framebuffer;
 
     RenderPassAttachmentDescription render_pass_attachment_description = {};
     render_pass_attachment_description.load_operation = RenderPassAttachmentLoadOperation::Clear;
-    render_pass_attachment_description.clear_color = Color4(0, 0, 0);
+    render_pass_attachment_description.clear_color = Color4(1, 0, 1);
 
     CAVE_ASSERT(m_target_framebuffer->get_attachment_count() == 1);
     render_pass_description.target_framebuffer_attachments.add(render_pass_attachment_description);
@@ -178,27 +211,54 @@ void Renderer2D::shutdown_quad_rendering()
     m_quad_vertices.clear_and_shrink();
 
     m_max_quads_per_batch = 0;
+    m_max_textures_per_batch = 0;
     m_current_number_of_quads = 0;
     m_total_number_of_quads = 0;
 }
 
-void Renderer2D::construct_quad(QuadVertex* destination_vertices, Vector2 translation, Vector2 scale, Color4 color)
+Optional<u32> Renderer2D::find_quad_texture_index(const RefPtr<Texture>& texture)
+{
+    for (u32 texture_index = 0; texture_index < m_quad_textures.count(); ++texture_index)
+    {
+        if (m_quad_textures[texture_index].get() == texture.get())
+            return texture_index;
+    }
+
+    if (m_quad_textures.count() >= m_max_textures_per_batch)
+    {
+        // There are no available texture slots.
+        return {};
+    }
+
+    m_quad_textures.add(texture);
+    return static_cast<u32>(m_quad_textures.count() - 1);
+}
+
+void Renderer2D::construct_quad(QuadVertex* destination_vertices, Vector2 translation, Vector2 scale, Color4 color, u32 texture_index, float tiling_factor)
 {
     // Bottom-left vertex.
     destination_vertices[0].position = translation + Vector2(-0.5F * scale.x, -0.5F * scale.y);
     destination_vertices[0].color = color;
+    destination_vertices[0].texture_coordinates = Vector2(0, 0) * tiling_factor;
+    destination_vertices[0].texture_index = texture_index;
 
     // Bottom-right vertex.
     destination_vertices[1].position = translation + Vector2(0.5F * scale.x, -0.5F * scale.y);
     destination_vertices[1].color = color;
-    
+    destination_vertices[1].texture_coordinates = Vector2(1, 0) * tiling_factor;
+    destination_vertices[1].texture_index = texture_index;
+
     // Top-right vertex.
     destination_vertices[2].position = translation + Vector2(0.5F * scale.x, 0.5F * scale.y);
     destination_vertices[2].color = color;
+    destination_vertices[2].texture_coordinates = Vector2(1, 1) * tiling_factor;
+    destination_vertices[2].texture_index = texture_index;
 
     // Top-left vertex.
     destination_vertices[3].position = translation + Vector2(-0.5F * scale.x, 0.5F * scale.y);
     destination_vertices[3].color = color;
+    destination_vertices[3].texture_coordinates = Vector2(0, 1) * tiling_factor;
+    destination_vertices[3].texture_index = texture_index;
 }
 
 void Renderer2D::begin_quad_batch()
@@ -220,11 +280,17 @@ void Renderer2D::flush_quad_batch()
     const ReadonlyByteSpan vertices_data = m_quad_vertices.slice(0, 4 * m_current_number_of_quads).readonly_byte_span();
     m_quad_vertex_buffer->upload_data(vertices_data);
 
+    for (u32 texture_index = 0; texture_index < m_quad_textures.count(); ++texture_index)
+    {
+        Renderer::bind_input_texture(m_quad_textures[texture_index], texture_index);
+    }
+
     const u32 indices_count = 6 * m_current_number_of_quads;
     Renderer::draw_indexed(m_quad_vertex_buffer, m_quad_index_buffer, indices_count);
 
     // Reset the current number of unprocessed quads in the batch.
     m_current_number_of_quads = 0;
+    m_quad_textures.clear();
 }
 
 } // namespace CaveGame

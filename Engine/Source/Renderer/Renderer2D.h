@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <Core/Containers/Optional.h>
 #include <Core/Containers/OwnPtr.h>
 #include <Core/Math/Color.h>
 #include <Core/Math/Vector.h>
@@ -30,6 +31,8 @@ public:
     {
         Vector2 position;
         Color4 color;
+        Vector2 texture_coordinates;
+        u32 texture_index;
     };
 
 public:
@@ -44,6 +47,8 @@ public:
 
     void submit_quad(Vector2 translation, Vector2 scale, Color4 color);
 
+    void submit_textured_quad(Vector2 translation, Vector2 scale, RefPtr<Texture> texture, Color4 tint_color = Color4(1));
+
 public:
     NODISCARD ALWAYS_INLINE u32 get_target_width() const { return m_target_framebuffer->get_width(); }
     NODISCARD ALWAYS_INLINE u32 get_target_height() const { return m_target_framebuffer->get_height(); }
@@ -53,7 +58,9 @@ private:
 
     void initialize_quad_rendering();
     void shutdown_quad_rendering();
-    void construct_quad(QuadVertex* destination_vertices, Vector2 translation, Vector2 scale, Color4 color);
+
+    Optional<u32> find_quad_texture_index(const RefPtr<Texture>& texture);
+    void construct_quad(QuadVertex* destination_vertices, Vector2 translation, Vector2 scale, Color4 color, u32 texture_index, float tiling_factor);
 
     void begin_quad_batch();
     void end_quad_batch();
@@ -63,9 +70,12 @@ private:
     RefPtr<Framebuffer> m_target_framebuffer;
 
     u32 m_max_quads_per_batch { 0 };
+    u32 m_max_textures_per_batch { 0 };
+
     u32 m_current_number_of_quads { 0 };
     u32 m_total_number_of_quads { 0 };
     Vector<QuadVertex> m_quad_vertices;
+    Vector<RefPtr<Texture>> m_quad_textures;
 
     RefPtr<Shader> m_quad_shader;
     RefPtr<RenderPass> m_quad_render_pass;
