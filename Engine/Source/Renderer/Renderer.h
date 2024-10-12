@@ -44,6 +44,10 @@ public:
 
     static RenderingContext& get_rendering_context();
 
+public:
+    static RefPtr<Texture> get_white_texture();
+    static RefPtr<Texture> get_black_texture();
+
 private:
     Renderer() = default;
     ~Renderer() = default;

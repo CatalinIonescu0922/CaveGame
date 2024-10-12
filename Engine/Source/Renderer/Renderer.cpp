@@ -20,6 +20,9 @@ struct RendererData
 {
     OwnPtr<RendererInterface> renderer_interface;
     OwnPtr<RenderingContext> rendering_context;
+
+    RefPtr<Texture> white_texture;
+    RefPtr<Texture> black_texture;
 };
 
 static RendererData* s_renderer;
@@ -47,6 +50,30 @@ bool Renderer::initialize(Window* window_context)
     // Create the rendering (D3D11) context.
     s_renderer->rendering_context = RenderingContext::create(window_context);
 
+    // White texture creation.
+    {
+        const u8 white_texture_data[] = { 0xFF, 0xFF, 0xFF, 0xFF };
+
+        TextureDescription white_texture_description = {};
+        white_texture_description.width = 1;
+        white_texture_description.height = 1;
+        white_texture_description.format = ImageFormat::R8G8B8A8;
+        white_texture_description.data = ReadonlyByteSpan(white_texture_data, ARRAY_COUNT(white_texture_data));
+        s_renderer->white_texture = Texture::create(white_texture_description);
+    }
+
+    // Black texture creation.
+    {
+        const u8 black_texture_data[] = { 0x00, 0x00, 0x00, 0xFF };
+
+        TextureDescription black_texture_description = {};
+        black_texture_description.width = 1;
+        black_texture_description.height = 1;
+        black_texture_description.format = ImageFormat::R8G8B8A8;
+        black_texture_description.data = ReadonlyByteSpan(black_texture_data, ARRAY_COUNT(black_texture_data));
+        s_renderer->black_texture = Texture::create(black_texture_description);
+    }
+
     return true;
 }
 
@@ -57,6 +84,9 @@ void Renderer::shutdown()
         // The renderer system has already been shut down or was never initialized.
         return;
     }
+
+    s_renderer->white_texture.release();
+    s_renderer->black_texture.release();
 
     s_renderer->rendering_context.release();
 
@@ -110,6 +140,16 @@ RenderingContext& Renderer::get_rendering_context()
 {
     CAVE_ASSERT(s_renderer && s_renderer->rendering_context.is_valid());
     return *s_renderer->rendering_context.get();
+}
+
+RefPtr<Texture> Renderer::get_white_texture()
+{
+    return s_renderer->white_texture;
+}
+
+RefPtr<Texture> Renderer::get_black_texture()
+{
+    return s_renderer->black_texture;
 }
 
 } // namespace CaveGame
